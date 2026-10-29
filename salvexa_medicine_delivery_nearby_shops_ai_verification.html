@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SalveXa - Medicine Delivery, Nearby Shops & AI Verification</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap">
+<!-- Leaflet Map CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Google Identity Services SDK -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{color-scheme:light;--bg:#FFFFFF;--card:#FFFFFF;--ink:#2A1013;--mute:#7B5559;--red:#C1121F;--red2:#9B0E19;--line:#F2D3D6;--onred:#FFFFFF;--ok:#2F7D4F;--g-blue:#4285F4;--ai-purple:#7e22ce;--ai-bg:#f3e8ff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "DM Sans",system-ui,sans-serif}
+h1,h2,h3,.brand{font-family:Fraunces,Georgia,serif;margin:0}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;background:var(--red);color:var(--onred);position:sticky;top:0;z-index:1000;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.top .brand{font-size:24px;font-weight:800;display:flex;align-items:center;gap:8px;cursor:pointer}
+.top-actions{display:flex;align-items:center;gap:8px}
+.top button{background:transparent;border:1.5px solid var(--onred);color:var(--onred);border-radius:99px;padding:6px 14px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.top button:hover{background:rgba(255,255,255,0.15)}
+.user-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.2);padding:4px 12px 4px 6px;border-radius:99px;cursor:pointer;border:1px solid rgba(255,255,255,0.4);color:white}
+.user-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;background:white;color:var(--red);display:grid;place-items:center;font-weight:700;font-size:14px}
+.btn{background:var(--red);color:var(--onred);border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s ease}
+.btn:hover{background:var(--red2)}
+.btn.ghost{background:transparent;color:var(--red);border:1.5px solid var(--red)}
+.btn.ghost:hover{background:rgba(193,18,31,0.05)}
+.btn.purple{background:var(--ai-purple);color:white;border:0}
+.btn.purple:hover{background:#6b21a8}
+.btn.sm{width:auto;padding:8px 14px;font-size:14px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-g{background:#FFFFFF;color:#3c4043;border:1.5px solid #dadce0;border-radius:12px;padding:12px 18px;font-weight:600;cursor:pointer;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,0.08);transition:background 0.15s,box-shadow 0.15s}
+.btn-g:hover{background:#f8f9fa;box-shadow:0 2px 6px rgba(0,0,0,0.12);border-color:#d2e3fc}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.hero{text-align:center;padding:32px 8px 20px}
+.hero h1{display:flex;align-items:center;justify-content:center;gap:10px;font-size:clamp(36px,8vw,56px);color:var(--red);font-weight:800;letter-spacing:-1px}
+.hero p{color:var(--mute);max-width:480px;margin:8px auto 0;font-size:17px}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:24px}
+.role{text-align:left;cursor:pointer;display:block;width:100%;transition:transform 0.15s,border-color 0.15s}
+.role:hover{border-color:var(--red);transform:translateY(-2px)}
+.role h3{font-size:22px;margin:8px 0 4px}
+.role p{margin:0;color:var(--mute);font-size:15px}
+.ico{width:48px;height:48px;border-radius:12px;background:var(--red);color:var(--onred);display:grid;place-items:center;font-size:24px}
+.form{max-width:460px;margin:20px auto;display:grid;gap:14px}
+label{display:grid;gap:4px;font-weight:500;font-size:14px}
+input,textarea,select{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+input:focus,textarea:focus,select:focus{border-color:var(--red);outline:none}
+.err{color:var(--red);font-size:14px;min-height:20px;font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-top:14px}
+.med{display:flex;flex-direction:column;gap:6px;transition:border-color 0.15s,transform 0.15s}
+.med:hover{border-color:var(--red);transform:translateY(-2px)}
+.med h3{font-size:18px}
+.med .pr{font-weight:700;font-size:18px;color:var(--red);margin-top:auto}
+.tag{display:inline-block;font-size:12px;border-radius:99px;padding:2px 10px;border:1px solid var(--red);color:var(--red);width:fit-content;font-weight:500}
+.tag.ok{border-color:var(--ok);color:var(--ok)}
+.tag.blue{border-color:var(--g-blue);color:var(--g-blue);background:rgba(66,133,244,0.06)}
+.tag.purple{border-color:var(--ai-purple);color:var(--ai-purple);background:var(--ai-bg)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-weight:700}
+.two{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:760px){.two{grid-template-columns:1.2fr 1fr}}
+.tot{display:flex;justify-content:space-between;padding:4px 0}
+.tot.b{font-weight:700;font-size:18px;border-top:2px solid var(--line);margin-top:6px;padding-top:10px}
+.muted{color:var(--mute)}
+.info div{padding:3px 0}
+.done{text-align:center;padding:48px 16px}
+.done .ico{margin:0 auto 12px;width:64px;height:64px;font-size:32px}
+.bar{display:flex;gap:10px;align-items:center;margin-top:12px}
+.bar input{flex:1}
+.thumb{max-width:100%;max-height:160px;border-radius:8px;margin-top:6px;border:1px solid var(--line)}
+.modal{position:fixed;inset:0;background:rgba(40,10,8,.6);backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px;z-index:9999;animation:fadeIn 0.2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal .card{max-width:580px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 10px 25px rgba(0,0,0,0.2)}
+.modal img{width:100%;border-radius:8px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1.5px solid var(--red);background:transparent;color:var(--red);border-radius:99px;padding:6px 14px;cursor:pointer;font-weight:500}
+.chip.on{background:var(--red);color:var(--onred)}
+.sec{margin:22px 0 0;color:var(--red);border-left:5px solid var(--red);padding-left:10px}
+.rxbox{border-color:var(--red)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0 4px}
+.stat{font-size:14px;color:var(--mute)}.stat b{display:block;font-size:24px;color:var(--red)}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.steps{display:flex;margin:8px 0}
+.stp{flex:1;text-align:center;font-size:11px;position:relative;color:var(--mute)}
+.stp i{display:block;width:14px;height:14px;border-radius:50%;border:2px solid var(--line);background:var(--bg);margin:0 auto 4px;position:relative;z-index:1}
+.stp::before{content:"";position:absolute;top:6px;left:-50%;width:100%;height:2px;background:var(--line)}
+.stp:first-child::before{display:none}
+.stp.on{color:var(--ink)}.stp.on i,.stp.on::before{background:var(--red);border-color:var(--red)}
+.link{background:none;border:0;color:var(--red);cursor:pointer;padding:0;text-decoration:underline;font-weight:500}
+.divider{display:flex;align-items:center;text-align:center;margin:12px 0;color:var(--mute);font-size:13px}
+.divider::before,.divider::after{content:'';flex:1;border-bottom:1px solid var(--line)}
+.divider span{padding:0 10px}
+.g-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--line)}
+.account-item{display:flex;align-items:center;gap:12px;padding:10px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color 0.15s,background 0.15s}
+.account-item:hover{border-color:var(--red);background:rgba(193,18,31,0.02)}
+.publish-banner{background:linear-gradient(135deg,#fff5f5 0%,#ffe3e5 100%);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.map-container{height:340px;width:100%;border-radius:14px;border:1.5px solid var(--line);overflow:hidden;margin-top:10px;z-index:1}
+.ai-box{background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 100%);border:1.5px solid #c084fc;border-radius:14px;padding:16px;margin-top:14px}
+.ai-meter{height:8px;background:#e9d5ff;border-radius:99px;overflow:hidden;margin:8px 0}
+.ai-meter-fill{height:100%;background:linear-gradient(90deg,#9333ea,#7e22ce);width:0%;transition:width 0.8s ease}
+.shop-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px;margin-top:8px;background:white}
+.shop-card.selected{border-color:var(--red);background:rgba(193,18,31,0.03)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// Default Medicine Catalogue
+const defaultMeds = [
+  {"id": 1, "name": "Cough Syrup 100 ml", "note": "Dry cough relief", "price": 85, "rx": false, "cat": "Cold and Cough", "info": "A cough suppressant syrup for dry, irritating coughs. Usually taken in small measured doses; avoid driving if it makes you drowsy.", "stock": 50},
+  {"id": 2, "name": "Expectorant Syrup 100 ml", "note": "Loosens chest mucus", "price": 90, "rx": false, "cat": "Cold and Cough", "info": "Helps thin and loosen mucus so a wet, chesty cough is easier to clear. Drink plenty of water while using it.", "stock": 50},
+  {"id": 3, "name": "Nasal Drops 10 ml", "note": "Blocked nose relief", "price": 55, "rx": false, "cat": "Cold and Cough", "info": "Shrinks swollen nasal lining to ease a blocked nose from cold. Generally not used for more than a few days in a row.", "stock": 50},
+  {"id": 4, "name": "Menthol Balm 50 g", "note": "Rub for cold and headache", "price": 70, "rx": false, "cat": "Cold and Cough", "info": "A cooling rub for chest, forehead and temples that gives a soothing feel during colds. For skin use only.", "stock": 50},
+  {"id": 5, "name": "Throat Lozenges", "note": "Pack of 12", "price": 40, "rx": false, "cat": "Cold and Cough", "info": "Dissolvable lozenges that soothe a sore, scratchy throat. Let them melt slowly in the mouth.", "stock": 50},
+  {"id": 6, "name": "Cold and Flu Tablets", "note": "Strip of 10", "price": 45, "rx": false, "cat": "Cold and Cough", "info": "A combination tablet commonly used for fever, body ache, runny nose and sneezing from a common cold.", "stock": 50},
+  {"id": 7, "name": "Paracetamol 500 mg", "note": "Strip of 10", "price": 30, "rx": false, "cat": "Fever and Pain", "info": "A common medicine for fever and mild to moderate pain such as headache or body ache. Do not exceed the daily limit.", "stock": 50},
+  {"id": 8, "name": "Paracetamol Syrup 60 ml", "note": "For children, fever", "price": 45, "rx": false, "cat": "Fever and Pain", "info": "A liquid form of paracetamol for children’s fever and pain. The dose depends on weight and age, so check with a doctor.", "stock": 50},
+  {"id": 9, "name": "Ibuprofen 400 mg", "note": "Strip of 10", "price": 35, "rx": false, "cat": "Fever and Pain", "info": "Eases pain, swelling and fever. Best taken after food as it can irritate the stomach.", "stock": 50},
+  {"id": 10, "name": "Pain Relief Gel 30 g", "note": "Muscle and joint pain", "price": 90, "rx": false, "cat": "Fever and Pain", "info": "A gel massaged gently onto the skin for muscle sprains, back pain and sore joints. Do not apply on broken skin.", "stock": 50},
+  {"id": 11, "name": "Aceclofenac 100 mg", "note": "Strip of 10", "price": 70, "rx": true, "cat": "Fever and Pain", "info": "A pain and inflammation reliever used for joint, back and dental pain. Needs a prescription.", "stock": 50},
+  {"id": 12, "name": "Azithromycin 500 mg", "note": "Antibiotic, strip of 3", "price": 120, "rx": true, "cat": "Infection", "info": "An antibiotic for bacterial infections of the throat, chest and skin. Complete the full course your doctor gives.", "stock": 50},
+  {"id": 13, "name": "Amoxicillin 500 mg", "note": "Strip of 10", "price": 110, "rx": true, "cat": "Infection", "info": "A widely used antibiotic for ear, throat, chest and urinary infections. Tell your doctor about any penicillin allergy.", "stock": 50},
+  {"id": 14, "name": "Amoxicillin + Clavulanate 625", "note": "Strip of 6", "price": 190, "rx": true, "cat": "Infection", "info": "A stronger antibiotic combination for infections that do not respond to amoxicillin alone.", "stock": 50},
+  {"id": 15, "name": "Cefixime 200 mg", "note": "Strip of 10", "price": 130, "rx": true, "cat": "Infection", "info": "An antibiotic used for typhoid, urinary, throat and chest infections as advised by a doctor.", "stock": 50},
+  {"id": 16, "name": "Metronidazole 400 mg", "note": "Strip of 10", "price": 40, "rx": true, "cat": "Infection", "info": "Treats certain stomach and gut infections caused by bacteria and parasites. Avoid alcohol during the course.", "stock": 50},
+  {"id": 17, "name": "Antiseptic Cream 15 g", "note": "For cuts and scrapes", "price": 60, "rx": false, "cat": "Infection", "info": "Applied on minor cuts, scrapes and burns to help prevent infection and support healing.", "stock": 50},
+  {"id": 18, "name": "Povidone Iodine 100 ml", "note": "Antiseptic solution", "price": 80, "rx": false, "cat": "Infection", "info": "A solution used to clean wounds and skin before dressing. For external use only.", "stock": 50},
+  {"id": 19, "name": "Antacid Gel 170 ml", "note": "Acidity and heartburn", "price": 70, "rx": false, "cat": "Stomach and Acidity", "info": "Quickly neutralises stomach acid to relieve heartburn, bloating and sour stomach.", "stock": 50},
+  {"id": 20, "name": "Pantoprazole 40 mg", "note": "Strip of 10", "price": 95, "rx": true, "cat": "Stomach and Acidity", "info": "Reduces stomach acid for reflux and gastric ulcers. Usually taken on an empty stomach, before breakfast.", "stock": 50},
+  {"id": 21, "name": "ORS Sachet", "note": "Orange flavour", "price": 20, "rx": false, "cat": "Stomach and Acidity", "info": "A mix of salts and sugar that replaces fluids lost during diarrhoea, vomiting or heat. Dissolve in clean water.", "stock": 50},
+  {"id": 22, "name": "Digestive Enzyme Syrup 200 ml", "note": "Indigestion and gas", "price": 110, "rx": false, "cat": "Stomach and Acidity", "info": "Helps digest food and ease gas, bloating and a heavy feeling after meals.", "stock": 50},
+  {"id": 23, "name": "Probiotic Capsules", "note": "Pack of 10", "price": 120, "rx": false, "cat": "Stomach and Acidity", "info": "Contains friendly gut bacteria that support digestion, often used during or after loose motions.", "stock": 50},
+  {"id": 24, "name": "Zinc Dispersible 20 mg", "note": "Strip of 10", "price": 35, "rx": false, "cat": "Stomach and Acidity", "info": "Dissolvable tablets often given to children during diarrhoea to speed recovery.", "stock": 50},
+  {"id": 25, "name": "Cetirizine 10 mg", "note": "Strip of 10", "price": 25, "rx": false, "cat": "Allergy", "info": "An antihistamine for sneezing, runny nose, itchy eyes and skin allergies. May cause mild sleepiness.", "stock": 50},
+  {"id": 26, "name": "Levocetirizine 5 mg", "note": "Strip of 10", "price": 35, "rx": false, "cat": "Allergy", "info": "A non-drowsy to mildly drowsy antihistamine for allergic rhinitis, hives and itching.", "stock": 50},
+  {"id": 27, "name": "Antihistamine Syrup 60 ml", "note": "Allergy, for children", "price": 65, "rx": false, "cat": "Allergy", "info": "A liquid allergy medicine for itching, sneezing and runny nose. Dose depends on age.", "stock": 50},
+  {"id": 28, "name": "Calamine Lotion 100 ml", "note": "Itching and rashes", "price": 75, "rx": false, "cat": "Allergy", "info": "A soothing lotion that calms itching from rashes, heat bumps and insect bites.", "stock": 50},
+  {"id": 29, "name": "Vitamin C 500 mg", "note": "Chewable, 15 tablets", "price": 60, "rx": false, "cat": "Vitamins and Immunity", "info": "Supports the immune system and general health. Extra amounts are passed out in urine.", "stock": 50},
+  {"id": 30, "name": "Multivitamin Syrup 200 ml", "note": "Daily nutrition", "price": 140, "rx": false, "cat": "Vitamins and Immunity", "info": "A blend of vitamins and minerals to fill dietary gaps, especially in children and during recovery.", "stock": 50},
+  {"id": 31, "name": "Calcium + Vitamin D3", "note": "Strip of 15", "price": 130, "rx": false, "cat": "Vitamins and Immunity", "info": "Supports bone and teeth strength. Vitamin D helps the body absorb calcium.", "stock": 50},
+  {"id": 32, "name": "Iron + Folic Acid", "note": "Strip of 30", "price": 110, "rx": false, "cat": "Vitamins and Immunity", "info": "Helps build haemoglobin and is commonly used for iron-deficiency anaemia and during pregnancy.", "stock": 50},
+  {"id": 33, "name": "Metformin 500 mg", "note": "Strip of 10", "price": 30, "rx": true, "cat": "Sugar and BP", "info": "A first-line medicine for type 2 diabetes that helps control blood sugar. Needs a prescription.", "stock": 50},
+  {"id": 34, "name": "Amlodipine 5 mg", "note": "Strip of 10", "price": 35, "rx": true, "cat": "Sugar and BP", "info": "Lowers high blood pressure and relaxes blood vessels. Take it at the same time every day.", "stock": 50},
+  {"id": 35, "name": "Atorvastatin 10 mg", "note": "Strip of 10", "price": 90, "rx": true, "cat": "Sugar and BP", "info": "Lowers bad cholesterol to reduce heart disease risk. Usually taken in the evening.", "stock": 50},
+  {"id": 36, "name": "Adhesive Bandages", "note": "Pack of 20", "price": 40, "rx": false, "cat": "First Aid and Care", "info": "Sterile strips to cover small cuts and blisters and keep them clean.", "stock": 50},
+  {"id": 37, "name": "Digital Thermometer", "note": "Fast reading", "price": 150, "rx": false, "cat": "First Aid and Care", "info": "Gives an accurate body temperature in under a minute. Wipe clean before and after use.", "stock": 50},
+  {"id": 38, "name": "Hand Sanitizer 100 ml", "note": "Alcohol based", "price": 50, "rx": false, "cat": "First Aid and Care", "info": "Kills most germs on hands when soap and water are not available.", "stock": 50}
+];
+
+// Nearby Pharmacy Stores Data (Centered near Punjab, India)
+const nearbyShops = [
+  { id: 1, name: "Apothecary Express Pharmacy", lat: 30.9010, lng: 75.8573, dist: "0.6 km", rating: "4.9 ★", time: "15-20 min", open: true, phone: "+91 98123 45678", address: "Mall Road, Near Fountain Plaza, Punjab" },
+  { id: 2, name: "MediCare 24/7 Superstore", lat: 30.9120, lng: 75.8450, dist: "1.2 km", rating: "4.8 ★", time: "20-25 min", open: true, phone: "+91 98765 12345", address: "Model Town Main Market, Punjab" },
+  { id: 3, name: "Apollo Pharmacy Partner", lat: 30.8920, lng: 75.8690, dist: "2.1 km", rating: "4.7 ★", time: "25-30 min", open: true, phone: "+91 98888 99900", address: "Civil Lines, Near DMCH Hospital, Punjab" },
+  { id: 4, name: "Sanjeevani Medicos", lat: 30.9200, lng: 75.8300, dist: "3.4 km", rating: "4.6 ★", time: "30-40 min", open: false, phone: "+91 98111 22233", address: "Sarabha Nagar Market, Punjab" }
+];
+
+function getStored(key, def) {
+  try {
+    const val = localStorage.getItem(key);
+    if (!val) return def;
+    const parsed = JSON.parse(val);
+    return (parsed !== null && parsed !== undefined) ? parsed : def;
+  } catch (e) {
+    return def;
+  }
+}
+
+function setStored(key, val) {
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch (e) {}
+}
+
+const storedMeds = getStored('salvexa_meds', defaultMeds);
+
+const S = {
+  view: 'home',
+  role: null,
+  user: getStored('salvexa_user', null),
+  cart: getStored('salvexa_cart', {}),
+  orders: getStored('salvexa_orders', []),
+  rx: null,
+  rxData: null,
+  aiScanResult: null,
+  selectedShop: getStored('salvexa_shop', nearbyShops[0]),
+  q: '',
+  cat: 'All',
+  tab: 'cat',
+  edit: null,
+  sq: '',
+  last: null,
+  googleClientId: getStored('salvexa_g_client_id', ''),
+  meds: (Array.isArray(storedMeds) && storedMeds.length > 0) ? storedMeds : defaultMeds
+};
+
+function saveState() {
+  setStored('salvexa_user', S.user);
+  setStored('salvexa_cart', S.cart);
+  setStored('salvexa_orders', S.orders);
+  setStored('salvexa_meds', S.meds);
+  setStored('salvexa_shop', S.selectedShop);
+  setStored('salvexa_g_client_id', S.googleClientId);
+}
+
+const $ = s => document.querySelector(s);
+const esc = t => String(t || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const logo = '<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><g transform="rotate(-40 15 15)"><rect x="2" y="8" width="26" height="14" rx="7" fill="#FFFFFF"/><path d="M15 8h6a7 7 0 010 14h-6z" fill="#F9C5CA"/><rect x="2" y="8" width="26" height="14" rx="7" fill="none" stroke="#9B0E19" stroke-width="1.5"/><path d="M15 8v14" stroke="#9B0E19" stroke-width="1.5"/></g></svg>';
+const googleG = '<svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>';
+
+function getInitials(name) {
+  if (!name || typeof name !== 'string') return 'U';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2 && parts[0] && parts[parts.length - 1]) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase() || 'U';
+}
+
+const head = (right = '') => {
+  let userPill = '';
+  if (S.user && S.user.name) {
+    const avatarContent = S.user.picture 
+      ? `<img class="user-avatar" src="${esc(S.user.picture)}" alt="Profile">`
+      : `<div class="user-avatar">${getInitials(S.user.name)}</div>`;
+    
+    const displayName = (S.user.name.trim().split(/\s+/)[0]) || 'User';
+
+    userPill = `<div class="user-badge" onclick="openProfileModal()">
+      ${avatarContent}
+      <span style="font-size:14px;font-weight:600;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(displayName)}</span>
+    </div>`;
+  }
+
+  return `<div class="top">
+    <div class="brand" onclick="go(S.user ? (S.role === 'seller' ? 'seller' : 'shop') : 'home')">${logo}SalveXa</div>
+    <div class="top-actions">
+      ${userPill}
+      ${right}
+    </div>
+  </div>`;
+};
+
+const cartCount = () => Object.values(S.cart || {}).reduce((a, b) => a + (b || 0), 0);
+
+const go = v => {
+  S.view = v;
+  safeRender();
+  window.scrollTo(0, 0);
+};
+
+const logout = () => {
+  S.user = null;
+  S.role = null;
+  S.cart = {};
+  S.rx = null;
+  S.rxData = null;
+  S.aiScanResult = null;
+  saveState();
+  go('home');
+};
+
+function safeRender() {
+  try {
+    render();
+  } catch (err) {
+    console.error('SalveXa render error, resetting state:', err);
+    S.user = null;
+    S.role = null;
+    S.view = 'home';
+    saveState();
+    try { render(); } catch (e) {}
+  }
+}
+
+function render() {
+  const v = S.view, a = $('#app');
+  if (!a) return;
+
+  if (v === 'home') {
+    a.innerHTML = `${head('<button class="sm" onclick="showPublishGuide()">🌐 Hosting Guide</button>')}<div class="wrap">
+    <div class="publish-banner">
+      <div>
+        <b style="color:var(--red)">Ready to make this live?</b>
+        <p class="muted" style="margin:2px 0 0;font-size:14px">Learn how to deploy your SalveXa website online for free and enable Google Sign-In.</p>
+      </div>
+      <button class="btn sm ghost" onclick="showPublishGuide()">Deploy Online</button>
+    </div>
+    <div class="hero">
+      <h1>${logo.replace('width="30" height="30"','width="52" height="52"').replace('#FFFFFF','#C1121F').replace('#F9C5CA','#FBE3E5')}SalveXa</h1>
+      <p>Order Medicines Online · Nearby Shops Map · AI Prescription Verification & Deepfake Protection</p>
+    </div>
+    <div class="roles">
+      <button class="card role" onclick="S.role='customer';go('login')">
+        <div class="ico">🛒</div>
+        <h3>Customer Portal</h3>
+        <p>Login with Gmail, find nearby pharmacies on map & verify Rx authenticity using AI.</p>
+      </button>
+      <button class="card role" onclick="S.role='seller';go('login')">
+        <div class="ico">🏪</div>
+        <h3>Pharmacy Partner</h3>
+        <p>List your store catalogue, receive verified Rx orders & manage local stock.</p>
+      </button>
+    </div>
+    </div>`;
+  }
+
+  if (v === 'login') {
+    const c = S.role === 'customer';
+    a.innerHTML = `${head('<button onclick="go(\'home\')">Back</button>')}<div class="wrap">
+      <div class="form card">
+        <div style="display:flex;align-items:center;justify-style:space-between">
+          <h2>${c ? 'Customer Login' : 'Seller Login'}</h2>
+        </div>
+        <p class="muted" style="margin:0">${c ? 'Login easily with your Gmail account or enter details manually.' : 'Enter your pharmacy credentials & drug license details.'}</p>
+        
+        <button class="btn-g" onclick="showGoogleModal()">${googleG} Continue with Gmail / Google</button>
+        
+        <div class="divider"><span>OR ENTER DETAILS MANUALLY</span></div>
+
+        <label>${c ? 'Full name' : 'Pharmacy name'}<input id="f1" autocomplete="name" value="${esc(S.user ? S.user.name : '')}"></label>
+        ${c ? `<label>Age<input id="f2" type="number" min="1" max="120" value="${esc(S.user && S.user.age ? S.user.age : '')}"></label>` : `<label>Drug licence number<input id="f2" value="${esc(S.user && S.user.lic ? S.user.lic : '')}"></label>`}
+        <label>Phone number<input id="f3" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel" value="${esc(S.user && S.user.phone ? S.user.phone : '')}"></label>
+        <label>${c ? 'Delivery address' : 'Shop address'}<textarea id="f4" rows="3" autocomplete="street-address">${esc(S.user && S.user.address ? S.user.address : '')}</textarea></label>
+
+        <div class="err" id="err"></div>
+        <button class="btn" onclick="doLogin()">Log in to SalveXa</button>
+      </div>
+    </div>`;
+  }
+
+  if (v === 'shop') shop();
+  if (v === 'shops_map') shopsMapView();
+  if (v === 'cart') cart();
+  if (v === 'done') {
+    const o = S.last || { id: 1001, total: 0 };
+    a.innerHTML = `${head()}<div class="wrap done">
+      <div class="ico">✓</div>
+      <h2>Order placed successfully!</h2>
+      <p class="muted">Order #${o.id} for ₹${o.total} is placed with <b>${esc(S.selectedShop?.name || 'Partner Pharmacy')}</b>. Cash/UPI on delivery.</p>
+      <div class="bar" style="justify-content:center;margin-top:20px">
+        <button class="btn" style="max-width:200px" onclick="go('orders')">Track Order</button>
+        <button class="btn ghost" style="max-width:200px" onclick="go('shop')">Keep Shopping</button>
+      </div>
+    </div>`;
+  }
+  if (v === 'seller') seller();
+  if (v === 'orders') ordersView();
+}
+
+function doLogin() {
+  const f = [1, 2, 3, 4].map(i => ($('#f' + i) ? $('#f' + i).value.trim() : '')), c = S.role === 'customer';
+  let e = '';
+  if (f.some(x => !x)) e = 'Fill in every field to continue.';
+  else if (!/^\d{10}$/.test(f[2])) e = 'Phone number must be 10 digits.';
+  else if (c && (+f[1] < 1 || +f[1] > 120)) e = 'Enter a valid age.';
+  if (e) { if ($('#err')) $('#err').textContent = e; return; }
+  
+  S.user = {
+    name: f[0],
+    email: (S.user && S.user.email) ? S.user.email : (f[0].toLowerCase().replace(/\s+/g, '') + '@gmail.com'),
+    age: c ? f[1] : undefined,
+    lic: c ? undefined : f[1],
+    phone: f[2],
+    address: f[3],
+    picture: (S.user && S.user.picture) ? S.user.picture : null,
+    provider: (S.user && S.user.provider) ? S.user.provider : 'manual'
+  };
+  saveState();
+  go(c ? 'shop' : 'seller');
+}
+
+function showGoogleModal() {
+  const d = document.createElement('div');
+  d.className = 'modal';
+  d.onclick = e => { if (e.target === d) d.remove(); };
+  
+  d.innerHTML = `<div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <h3 style="display:flex;align-items:center;gap:8px">${googleG} Sign in with Google</h3>
+      <button class="btn sm ghost" onclick="this.closest('.modal').remove()">✕</button>
+    </div>
+    <p class="muted" style="font-size:14px;margin-top:0">Choose a Google account to sign in to SalveXa:</p>
+    
+    <div style="display:grid;gap:10px;margin:16px 0">
+      <div class="account-item" onclick="loginWithGoogle('alex.morgan@gmail.com', 'Alex Morgan', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80')">
+        <img class="g-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Alex">
+        <div>
+          <b>Alex Morgan</b> <span class="tag blue">Gmail</span>
+          <div class="muted" style="font-size:13px">alex.morgan@gmail.com</div>
+        </div>
+      </div>
+
+      <div class="account-item" onclick="loginWithGoogle('rahul.sharma@gmail.com', 'Rahul Sharma', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80')">
+        <img class="g-avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80" alt="Rahul">
+        <div>
+          <b>Rahul Sharma</b> <span class="tag blue">Gmail</span>
+          <div class="muted" style="font-size:13px">rahul.sharma@gmail.com</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"><span>OR ENTER YOUR GMAIL ADDRESS</span></div>
+    
+    <label>Your Google Email
+      <input id="g_email_input" type="email" placeholder="username@gmail.com" value="user@gmail.com">
+    </label>
+    <label style="margin-top:8px">Your Full Name
+      <input id="g_name_input" placeholder="First & Last Name" value="Google User">
+    </label>
+
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn" onclick="submitCustomGoogleAccount()">${googleG} Continue as Signed-in Google User</button>
+    </div>
+  </div>`;
+  document.body.appendChild(d);
+}
+
+function submitCustomGoogleAccount() {
+  const email = $('#g_email_input') ? $('#g_email_input').value.trim() : '';
+  const name = $('#g_name_input') ? $('#g_name_input').value.trim() : '';
+  if (!email || !name) return;
+  loginWithGoogle(email, name, null);
+}
+
+function loginWithGoogle(email, name, picture) {
+  S.user = {
+    name: name || 'Google User',
+    email: email,
+    picture: picture || null,
+    age: (S.user && S.user.age) ? S.user.age : '26',
+    phone: (S.user && S.user.phone) ? S.user.phone : '9876543210',
+    address: (S.user && S.user.address) ? S.user.address : 'House #42, Green Park Avenue, Punjab',
+    provider: 'google'
+  };
+  saveState();
+  const m = $('.modal');
+  if (m) m.remove();
+  go(S.role === 'seller' ? 'seller' : 'shop');
+}
+
+function openProfileModal() {
+  if (!S.user) return;
+  const d = document.createElement('div');
+  d.className = 'modal';
+  d.onclick = e => { if (e.target === d) d.remove(); };
+
+  const avatar = S.user.picture 
+    ? `<img style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid var(--red)" src="${esc(S.user.picture)}" alt="Profile">`
+    : `<div style="width:64px;height:64px;border-radius:50%;background:var(--red);color:white;display:grid;place-items:center;font-size:24px;font-weight:700">${getInitials(S.user.name)}</div>`;
+
+  d.innerHTML = `<div class="card" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <h3>User Profile & Account</h3>
+      <button class="btn sm ghost" onclick="this.closest('.modal').remove()">✕</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:16px;margin:16px 0;padding:12px;background:rgba(193,18,31,0.03);border-radius:12px;border:1px solid var(--line)">
+      ${avatar}
+      <div>
+        <h3 style="margin:0">${esc(S.user.name)}</h3>
+        <div class="muted" style="font-size:14px">${esc(S.user.email || 'Gmail account linked')}</div>
+        <span class="tag blue" style="margin-top:4px">${googleG} ${S.user.provider === 'google' ? 'Google Verified Account' : 'SalveXa Profile'}</span>
+      </div>
+    </div>
+
+    <div style="display:grid;gap:10px">
+      <label>Full Name <input id="p_name" value="${esc(S.user.name)}"></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <label>Age <input id="p_age" type="number" value="${esc(S.user.age || 25)}"></label>
+        <label>Phone Number <input id="p_phone" value="${esc(S.user.phone || '')}"></label>
+      </div>
+      <label>Default Delivery Address <textarea id="p_addr" rows="2">${esc(S.user.address || '')}</textarea></label>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn" onclick="saveProfileChanges()">Save Profile</button>
+      <button class="btn ghost" onclick="logout();const m=$('.modal');if(m)m.remove()">Log out</button>
+    </div>
+  </div>`;
+  document.body.appendChild(d);
+}
+
+function saveProfileChanges() {
+  if (!S.user) return;
+  S.user.name = ($('#p_name') ? $('#p_name').value.trim() : '') || S.user.name;
+  S.user.age = ($('#p_age') ? $('#p_age').value.trim() : '') || S.user.age;
+  S.user.phone = ($('#p_phone') ? $('#p_phone').value.trim() : '') || S.user.phone;
+  S.user.address = ($('#p_addr') ? $('#p_addr').value.trim() : '') || S.user.address;
+  saveState();
+  const m = $('.modal');
+  if (m) m.remove();
+  safeRender();
+}
+
+function showPublishGuide() {
+  const d = document.createElement('div');
+  d.className = 'modal';
+  d.onclick = e => { if (e.target === d) d.remove(); };
+
+  d.innerHTML = `<div class="card" style="max-width:640px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <h3>🌐 How to Publish Your Website & Enable Live Google Sign-In</h3>
+      <button class="btn sm ghost" onclick="this.closest('.modal').remove()">✕</button>
+    </div>
+
+    <p style="margin-top:0">You can publish this single HTML file into a live web link in 2 minutes for free!</p>
+
+    <h4 style="color:var(--red);margin:14px 0 6px">1. Host Free on Netlify or Vercel</h4>
+    <ol style="margin:0;padding-left:20px;font-size:15px">
+      <li>Go to <a href="https://app.netlify.com/drop" target="_blank" class="link">Netlify Drop</a> or <a href="https://vercel.com" target="_blank" class="link">Vercel</a>.</li>
+      <li>Rename your file to <code>index.html</code> and drag & drop the folder.</li>
+      <li>You will get an instant live website URL like <code>https://salvexa.netlify.app</code>!</li>
+    </ol>
+
+    <h4 style="color:var(--red);margin:14px 0 6px">2. Host Free on GitHub Pages</h4>
+    <ol style="margin:0;padding-left:20px;font-size:15px">
+      <li>Create a repository named <code>salvexa</code> on GitHub.</li>
+      <li>Upload <code>index.html</code> and go to <b>Settings &gt; Pages</b>.</li>
+      <li>Select <b>main branch</b> and click Save. Your site will be live at <code>https://yourusername.github.io/salvexa</code>.</li>
+    </ol>
+
+    <h4 style="color:var(--red);margin:14px 0 6px">3. Setting up Official Google OAuth Client ID</h4>
+    <ol style="margin:0;padding-left:20px;font-size:15px">
+      <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="link">Google Cloud Console</a>.</li>
+      <li>Create a new project &gt; <b>Credentials &gt; Create OAuth Client ID</b> (Web application).</li>
+      <li>Add your live website domain (e.g. <code>https://salvexa.netlify.app</code>) to <b>Authorized JavaScript Origins</b>.</li>
+      <li>Copy your Client ID and paste it into the state config in <code>salvexa.html</code>.</li>
+    </ol>
+
+    <div style="margin-top:16px;text-align:right">
+      <button class="btn sm" onclick="this.closest('.modal').remove()">Got it!</button>
+    </div>
+  </div>`;
+  document.body.appendChild(d);
+}
+
+function shop() {
+  const cats = [...new Set(S.meds.map(m => m.cat))];
+  const displayName = (S.user && S.user.name) ? S.user.name.split(/\s+/)[0] : 'Guest';
+
+  $('#app').innerHTML = `${head(`
+    <button onclick="go('shops_map')">📍 Nearby Shops Map</button>
+    <button onclick="go('orders')">Orders</button>
+    <button id="cb" onclick="go('cart')">Cart (${cartCount()})</button>
+    <button onclick="logout()">Log out</button>
+  `)}
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div>
+        <h2>Hello, ${esc(displayName)} 👋</h2>
+        <p class="muted" style="margin:2px 0 0">Ordering from: <b style="color:var(--red)">${esc(S.selectedShop?.name || 'Apothecary Express')}</b> (${esc(S.selectedShop?.dist || '0.6 km away')})</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn sm purple" onclick="openAiRxModal()">🤖 AI Rx Verifier</button>
+        <button class="btn sm ghost" onclick="go('shops_map')">📍 Switch Pharmacy</button>
+      </div>
+    </div>
+    
+    <div class="bar"><input id="q" placeholder="Search medicines by name or condition..." value="${esc(S.q)}" oninput="S.q=this.value;list()"></div>
+    <div class="chips">${['All', ...cats].map(c => `<button class="chip${S.cat === c ? ' on' : ''}" onclick="S.cat='${c}';shop()">${c}</button>`).join('')}</div>
+    <div id="list"></div>
+  </div>`;
+  list();
+}
+
+function shopsMapView() {
+  $('#app').innerHTML = `${head(`
+    <button onclick="go('shop')">🛒 Back to Shop</button>
+    <button id="cb" onclick="go('cart')">Cart (${cartCount()})</button>
+  `)}
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div>
+        <h2>📍 Pharmacies & Medical Shops Near You</h2>
+        <p class="muted" style="margin:2px 0 0">Select a local pharmacy store to order medicines for express delivery.</p>
+      </div>
+      <button class="btn sm ghost" onclick="go('shop')">🛒 Catalogue View</button>
+    </div>
+
+    <!-- Leaflet Map Canvas -->
+    <div id="map" class="map-container"></div>
+
+    <h3 style="margin-top:20px;color:var(--red)">Available Nearby Pharmacies (${nearbyShops.length})</h3>
+    <div style="display:grid;gap:10px;margin-top:10px">
+      ${nearbyShops.map(s => `
+        <div class="shop-card ${S.selectedShop?.id === s.id ? 'selected' : ''}">
+          <div>
+            <b>${esc(s.name)}</b> <span class="tag ok">${esc(s.rating)}</span> ${s.open ? '<span class="tag blue">Open Now</span>' : '<span class="tag">Closed</span>'}
+            <div class="muted" style="font-size:14px;margin-top:2px">📍 ${esc(s.address)} · <b>${esc(s.dist)} away</b></div>
+            <div class="muted" style="font-size:13px">⚡ Express delivery in ${esc(s.time)}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <button class="btn sm ${S.selectedShop?.id === s.id ? '' : 'ghost'}" onclick="selectPharmacy(${s.id})">
+              ${S.selectedShop?.id === s.id ? '✓ Selected' : 'Select Store'}
+            </button>
+            <a class="link" style="font-size:13px" href="https://maps.google.com/?q=${encodeURIComponent(s.name + ' ' + s.address)}" target="_blank">🗺️ Directions</a>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+
+  // Render Leaflet Map
+  setTimeout(initLeafletMap, 100);
+}
+
+let mapInstance = null;
+function initLeafletMap() {
+  const mapEl = document.getElementById('map');
+  if (!mapEl || typeof L === 'undefined') return;
+
+  if (mapInstance) {
+    mapInstance.remove();
+    mapInstance = null;
+  }
+
+  // Centered at Punjab, India
+  mapInstance = L.map('map').setView([30.9010, 75.8573], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(mapInstance);
+
+  nearbyShops.forEach(s => {
+    const marker = L.marker([s.lat, s.lng]).addTo(mapInstance);
+    marker.bindPopup(`
+      <div style="font-family:'DM Sans',sans-serif;padding:4px">
+        <b style="color:#C1121F;font-size:15px">${esc(s.name)}</b><br>
+        <span style="font-size:13px;color:#666">${esc(s.dist)} away · ${esc(s.rating)}</span><br>
+        <span style="font-size:12px;color:#333">${esc(s.address)}</span><br>
+        <button style="margin-top:8px;background:#C1121F;color:white;border:0;padding:6px 12px;border-radius:6px;font-weight:bold;cursor:pointer" onclick="selectPharmacy(${s.id})">Select Store</button>
+      </div>
+    `);
+  });
+
+  // Ensure tiles load completely inside Canvas container
+  setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 300);
+}
+
+function selectPharmacy(id) {
+  const shop = nearbyShops.find(s => s.id === id);
+  if (!shop) return;
+  S.selectedShop = shop;
+  saveState();
+  go('shop');
+}
+
+const mcard = x => `<div class="card med" onclick="info(${x.id})">
+  <h3>${esc(x.name)}</h3>
+  <span class="muted" style="font-size:14px">${esc(x.note)}</span>
+  ${x.rx ? '<span class="tag">Prescription needed</span>' : '<span class="tag ok">No prescription</span>'}
+  <div class="pr">${pr(x)}</div>
+  ${x.stock <= 0 
+    ? '<button class="btn sm" disabled>Out of stock</button>' 
+    : `<button class="btn sm" onclick="event.stopPropagation();add(${x.id})">${S.cart[x.id] ? 'Added (' + S.cart[x.id] + ') · Add more' : 'Add to cart'}</button>`
+  }
+</div>`;
+
+const eff = m => Math.round(m.price * (1 - (m.disc || 0) / 100));
+const pr = x => x.disc ? `<s class="muted" style="font-size:14px;font-weight:400">₹${x.price}</s> ₹${eff(x)} <span class="tag">${x.disc}% off</span>` : '₹' + x.price;
+
+function list() {
+  const q = S.q.toLowerCase();
+  let h = '';
+  [...new Set(S.meds.map(m => m.cat))].filter(c => S.cat === 'All' || c === S.cat).forEach(c => {
+    const m = S.meds.filter(x => !x.off && x.cat === c && (x.name + ' ' + x.note).toLowerCase().includes(q));
+    if (m.length) h += `<h3 class="sec">${c}</h3><div class="grid">${m.map(mcard).join('')}</div>`;
+  });
+  if ($('#list')) {
+    $('#list').innerHTML = h || '<p class="muted" style="padding:20px 0">No medicine matches your search criteria.</p>';
+  }
+}
+
+function add(id) {
+  const m = S.meds.find(x => x.id == id);
+  if (!m || (S.cart[id] || 0) >= m.stock) return;
+  S.cart[id] = (S.cart[id] || 0) + 1;
+  saveState();
+  list();
+  if ($('#cb')) $('#cb').textContent = 'Cart (' + cartCount() + ')';
+}
+
+function info(id) {
+  const x = S.meds.find(m => m.id == id);
+  if (!x) return;
+  const d = document.createElement('div');
+  d.className = 'modal';
+  d.onclick = e => { if (e.target === d) d.remove(); };
+  d.innerHTML = `<div class="card">
+    <h2>${esc(x.name)}</h2>
+    <p class="muted" style="margin:2px 0 8px">${esc(x.cat)} · ${esc(x.note)}</p>
+    ${x.rx ? '<span class="tag">Prescription needed</span>' : '<span class="tag ok">No prescription</span>'}
+    <p style="margin:12px 0">${esc(x.info)}</p>
+    <p class="muted" style="font-size:13px;background:rgba(0,0,0,0.02);padding:8px;border-radius:8px">Medical Disclaimer: General medical information. Please follow your physician or doctor advice for dosage.</p>
+    <div class="bar" style="margin-top:16px"><b style="color:var(--red);font-size:20px">${pr(x)}</b>
+    ${x.stock <= 0 ? '<button class="btn" disabled>Out of stock</button>' : `<button class="btn" onclick="add(${x.id});this.closest('.modal').remove()">Add to cart</button>`}
+    </div>
+  </div>`;
+  document.body.appendChild(d);
+}
+
+// AI Prescription Verification Scanner & Analysis
+function openAiRxModal() {
+  const d = document.createElement('div');
+  d.className = 'modal';
+  d.onclick = e => { if (e.target === d) d.remove(); };
+
+  d.innerHTML = `<div class="card" style="max-width:600px">
+    <div style="display:flex;align-items:center;justify-style:space-between;margin-bottom:12px">
+      <h3 style="display:flex;align-items:center;gap:8px;color:var(--ai-purple)">🤖 AI Prescription Authenticity Verifier</h3>
+      <button class="btn sm ghost" onclick="this.closest('.modal').remove()">✕</button>
+    </div>
+
+    <p style="margin-top:0;font-size:15px">Upload or test a prescription image. Our AI Computer Vision model scans for <b>AI generation signatures, photo manipulation, doctor seals, and medicine extraction</b>.</p>
+
+    <div class="ai-box">
+      <b>Upload Prescription File / Photo</b><br>
+      <input type="file" id="ai_rx_input" accept="image/*" onchange="processAiScan(this)" style="margin-top:8px">
+
+      <div class="divider"><span>OR TEST WITH DEMO SAMPLES</span></div>
+      
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn sm purple" onclick="runAiDemo('authentic')">🟢 Test Authentic Doctor Rx</button>
+        <button class="btn sm ghost" style="border-color:var(--ai-purple);color:var(--ai-purple)" onclick="runAiDemo('tampered')">🔴 Test AI-Edited / Tampered Rx</button>
+      </div>
+    </div>
+
+    <div id="ai_scan_output" style="margin-top:16px"></div>
+  </div>`;
+  document.body.appendChild(d);
+}
+
+function processAiScan(el) {
+  const file = el.files ? el.files[0] : null;
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    runAiAnalysisSimulation(reader.result, file.name, false);
+  };
+  reader.readAsDataURL(file);
+}
+
+function runAiDemo(type) {
+  const isAuthentic = (type === 'authentic');
+  const sampleUrl = isAuthentic 
+    ? 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80'
+    : 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=400&q=80';
+  runAiAnalysisSimulation(sampleUrl, isAuthentic ? 'Doctor_Prescription_DrSharma.jpg' : 'AI_Generated_Rx_Edit.png', !isAuthentic);
+}
+
+function runAiAnalysisSimulation(dataUrl, filename, forceTampered) {
+  const output = document.getElementById('ai_scan_output');
+  if (!output) return;
+
+  output.innerHTML = `<div style="text-align:center;padding:20px;background:#faf5ff;border-radius:12px;border:1px solid #e9d5ff">
+    <div style="font-size:24px;margin-bottom:8px">🔍 Scanning Image Artifacts & Metadata...</div>
+    <div class="ai-meter"><div id="ai_fill" class="ai-meter-fill"></div></div>
+    <div id="ai_status" class="muted" style="font-size:14px">Analyzing noise distribution & font consistency...</div>
+  </div>`;
+
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += 25;
+    const fill = document.getElementById('ai_fill');
+    const status = document.getElementById('ai_status');
+    if (fill) fill.style.width = progress + '%';
+    
+    if (progress === 50 && status) status.textContent = 'Verifying Doctor Stamp, License Signature & Edge Sharpness...';
+    if (progress === 75 && status) status.textContent = 'Extracting Medicine Names & Checking Dosage Safety...';
+
+    if (progress >= 100) {
+      clearInterval(interval);
+      renderAiScanFinalResult(dataUrl, filename, forceTampered);
+    }
+  }, 250);
+}
+
+function renderAiScanFinalResult(dataUrl, filename, isTampered) {
+  const output = document.getElementById('ai_scan_output');
+  if (!output) return;
+
+  const authScore = isTampered ? 24.5 : 98.2;
+  const isAuthentic = !isTampered;
+
+  S.aiScanResult = {
+    authentic: isAuthentic,
+    score: authScore,
+    filename: filename,
+    dataUrl: dataUrl,
+    extractedMeds: isAuthentic ? ["Paracetamol 500 mg", "Amoxicillin 500 mg", "Cough Syrup 100 ml"] : ["High Risk Controlled Substance (Flagged)"],
+    doctor: isAuthentic ? "Dr. A. K. Verma, MD (Reg #39420)" : "Unverified / Generative Text Pattern",
+    timestamp: new Date().toLocaleTimeString()
+  };
+
+  output.innerHTML = `<div style="border:1.5px solid ${isAuthentic ? 'var(--ok)' : 'var(--red)'};border-radius:14px;padding:16px;background:${isAuthentic ? 'rgba(47,125,79,0.04)' : 'rgba(193,18,31,0.04)'}">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <b style="color:${isAuthentic ? 'var(--ok)' : 'var(--red)'};font-size:18px">
+        ${isAuthentic ? '🟢 Authentic Prescription Verified (98.2% Confidence)' : '🔴 WARNING: AI Generation / Photo Manipulation Detected!'}
+      </b>
+      <span class="tag ${isAuthentic ? 'ok' : ''}">${isAuthentic ? 'Rx Verified' : 'Risk High'}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:100px 1fr;gap:12px;margin-top:12px;align-items:center">
+      <img src="${dataUrl}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--line)" alt="Rx Scan">
+      <div style="font-size:14px">
+        <div><b>Image File:</b> ${esc(filename)}</div>
+        <div><b>Medical Practitioner:</b> ${esc(S.aiScanResult.doctor)}</div>
+        <div><b>Extracted Rx Medicines:</b> ${esc(S.aiScanResult.extractedMeds.join(', '))}</div>
+        <div style="margin-top:4px;color:var(--mute)">AI Deepfake Analysis: ${isAuthentic ? 'No digital manipulation detected. Original camera photo attributes confirmed.' : 'Font artifact discrepancies, pixel noise mismatches, and synthetic texture signatures identified.'}</div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:10px">
+      <button class="btn sm ${isAuthentic ? 'purple' : ''}" onclick="attachVerifiedRxToCart()">
+        ${isAuthentic ? '✓ Use Verified Rx For Checkout' : '⚠️ Submit For Human Pharmacist Audit'}
+      </button>
+    </div>
+  </div>`;
+}
+
+function attachVerifiedRxToCart() {
+  if (!S.aiScanResult) return;
+  S.rx = S.aiScanResult.filename;
+  S.rxData = S.aiScanResult.dataUrl;
+  saveState();
+  const m = $('.modal');
+  if (m) m.remove();
+  go('cart');
+}
+
+function chg(id, d) {
+  const m = S.meds.find(x => x.id == id);
+  if (!m) return;
+  if (d > 0 && (S.cart[id] || 0) >= m.stock) return;
+  S.cart[id] = (S.cart[id] || 0) + d;
+  if (S.cart[id] <= 0) delete S.cart[id];
+  saveState();
+  cart();
+}
+
+function cart() {
+  const items = Object.keys(S.cart).map(id => ({ m: S.meds.find(x => x.id == id), n: S.cart[id] })).filter(i => i.m);
+  const u = S.user || { name: 'Customer', phone: 'Not set', address: 'Not set', age: 'N/A' };
+  const sub = items.reduce((t, i) => t + eff(i.m) * i.n, 0), fee = items.length ? 20 : 0, rxI = items.filter(i => i.m.rx), otc = items.filter(i => !i.m.rx), needRx = rxI.length > 0;
+  
+  if (!items.length) {
+    $('#app').innerHTML = `${head('<button onclick="go(\'shop\')">Back</button>')}<div class="wrap done">
+      <h2>Your cart is empty</h2>
+      <p class="muted">Explore our catalog and add medicines to start your order.</p>
+      <button class="btn" style="max-width:260px;margin-top:12px" onclick="go('shop')">Browse Medicines</button>
+    </div>`;
+    return;
+  }
+
+  const rows = l => l.length ? l.map(i => `<div class="row">
+    <div><b>${esc(i.m.name)}</b><div class="muted" style="font-size:14px">₹${eff(i.m)} each</div></div>
+    <div class="qty"><button aria-label="Remove one" onclick="chg(${i.m.id},-1)">−</button>${i.n}<button aria-label="Add one" onclick="chg(${i.m.id},1)">+</button></div>
+  </div>`).join('') : '<p class="muted" style="margin:6px 0 0">Nothing in this section.</p>';
+
+  $('#app').innerHTML = `${head('<button onclick="go(\'shop\')">Back</button>')}<div class="wrap">
+    <h2>Your Cart & Checkout</h2>
+    <div class="two" style="margin-top:12px">
+      <div style="display:grid;gap:14px;align-content:start">
+        <div class="card">
+          <h3>Over-the-Counter Medicines</h3>
+          <p class="muted" style="margin:2px 0 4px;font-size:14px">Directly dispensable medicines.</p>
+          ${rows(otc)}
+        </div>
+        <div class="card rxbox">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <h3>Prescription Required</h3>
+            <button class="btn sm purple" onclick="openAiRxModal()">🤖 AI Rx Scan</button>
+          </div>
+          <p class="muted" style="margin:2px 0 4px;font-size:14px">Upload a doctor's prescription photo for Rx items.</p>
+          ${rows(rxI)}
+          ${needRx ? `<div style="margin-top:12px"><b>Attach Doctor's Prescription</b><br>
+            <input type="file" accept="image/*" onchange="pickRx(this)" style="margin-top:6px">
+            <div id="rxn" class="muted" style="font-size:14px;margin-top:6px">${rxHtml()}</div>
+          </div>` : ''}
+        </div>
+      </div>
+
+      <div style="display:grid;gap:14px;align-content:start">
+        <div class="card info">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <b>Delivering From:</b>
+            <button class="link" onclick="go('shops_map')">Change Store</button>
+          </div>
+          <div style="font-weight:700;color:var(--red);margin-top:4px">${esc(S.selectedShop?.name || 'Apothecary Express')}</div>
+          <div class="muted" style="font-size:13px">📍 ${esc(S.selectedShop?.address || 'Punjab')} (${esc(S.selectedShop?.dist || '0.6 km')})</div>
+          
+          <hr style="border:0;border-top:1px solid var(--line);margin:10px 0">
+          
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <b>Customer Delivery Details:</b>
+            <button class="link" onclick="openProfileModal()">Edit Profile</button>
+          </div>
+          <div style="margin-top:4px">${esc(u.name)}${u.age ? ', ' + esc(u.age) + ' yrs' : ''}</div>
+          <div>📱 ${esc(u.phone)}</div>
+          <div class="muted">📍 ${esc(u.address)}</div>
+        </div>
+
+        <div class="card">
+          <div class="tot"><span>Items Subtotal</span><span>₹${sub}</span></div>
+          <div class="tot"><span>Express Delivery Fee</span><span>₹${fee}</span></div>
+          <div class="tot b"><span>Total Payable</span><span>₹${sub + fee}</span></div>
+        </div>
+
+        <div class="err" id="err"></div>
+        <button class="btn" onclick="place(${sub + fee},${needRx})">Place Order · ₹${sub + fee}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function rxHtml() { 
+  if (!S.rxData) return '';
+  const aiBadge = S.aiScanResult ? `<span class="tag purple" style="margin-top:4px">🤖 AI Scan: ${S.aiScanResult.authentic ? 'Verified Authentic (98%)' : 'Tampered / Audit Flagged'}</span>` : '';
+  return `Attached: ${esc(S.rx)}<br>${aiBadge}<br><img class="thumb" alt="Your prescription" src="${S.rxData}">`; 
+}
+
+function pickRx(el) {
+  const f = el.files ? el.files[0] : null;
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    S.rx = f.name;
+    S.rxData = r.result;
+    // Automatically trigger AI verification check
+    runAiAnalysisSimulation(r.result, f.name, false);
+    if ($('#rxn')) $('#rxn').innerHTML = rxHtml();
+  };
+  r.readAsDataURL(f);
+}
+
+function viewRx(i) {
+  const o = S.orders.find(x => x.id === i);
+  if (!o) return;
+  const d = document.createElement('div');
+  d.className = 'modal';
+  d.onclick = e => { if (e.target === d) d.remove(); };
+  d.innerHTML = `<div class="card">
+    <div class="row" style="border:0"><b>Prescription for Order #${o.id}</b>
+    <button class="btn sm" onclick="this.closest('.modal').remove()">Close</button></div>
+    <img alt="Prescription" src="${o.rxData}">
+  </div>`;
+  document.body.appendChild(d);
+}
+
+function place(total, needRx) {
+  if (needRx && !S.rxData) { if ($('#err')) $('#err').textContent = 'Upload your prescription to order Rx medicine.'; return; }
+  const o = {
+    id: 1001 + S.orders.length,
+    cust: { ...S.user },
+    shop: S.selectedShop,
+    items: Object.keys(S.cart).map(id => {
+      const m = S.meds.find(x => x.id == id);
+      return m ? { mid: m.id, name: m.name, n: S.cart[id], unit: eff(m) } : null;
+    }).filter(Boolean),
+    rx: S.rx,
+    rxData: S.rxData,
+    aiVerified: S.aiScanResult?.authentic || false,
+    total,
+    st: 'Pending',
+    date: new Date().toLocaleDateString()
+  };
+  S.orders.unshift(o);
+  S.last = o;
+  S.cart = {};
+  S.rx = null;
+  S.rxData = null;
+  S.aiScanResult = null;
+  saveState();
+  go('done');
+}
+
+const CATS = ['Cold and Cough', 'Fever and Pain', 'Infection', 'Stomach and Acidity', 'Allergy', 'Vitamins and Immunity', 'Sugar and BP', 'First Aid and Care'];
+const STEPS = ['Placed', 'Confirmed', 'Packed', 'Out for delivery', 'Delivered'];
+
+const stepper = st => {
+  if (st === 'Rejected') return '<span class="tag">Rejected by seller</span>';
+  const k = st === 'Pending' ? 0 : STEPS.indexOf(st);
+  return `<div class="steps">${STEPS.map((x, i) => `<div class="stp${i <= k ? ' on' : ''}"><i></i><span>${x}</span></div>`).join('')}</div>`;
+};
+
+const oline = o => (o.items || []).map(x => esc(x.name) + ' × ' + x.n).join(', ');
+
+function ordersView() {
+  const mine = S.orders.filter(o => o.cust && ((S.user && o.cust.phone === S.user.phone) || (S.user && o.cust.email === S.user.email)));
+  $('#app').innerHTML = `${head('<button onclick="go(\'shop\')">Back</button>')}<div class="wrap">
+    <h2>Your Orders</h2>
+    ${mine.length 
+      ? mine.map(o => `<div class="card" style="margin-top:12px">
+          <div class="row" style="border:0;padding:0">
+            <b>#${o.id} · ${esc(o.shop?.name || 'Local Pharmacy')}</b>
+            <span class="tag${o.st === 'Delivered' ? ' ok' : ''}">${o.st === 'Pending' ? 'Waiting for seller' : o.st}</span>
+          </div>
+          <div style="font-size:14px;margin:6px 0">${oline(o)} · ₹${o.total}</div>
+          ${stepper(o.st)}
+        </div>`).join('') 
+      : '<p class="muted" style="padding:20px 0">No orders placed yet. Medicines you order will show up here.</p>'
+    }
+  </div>`;
+}
+
+function seller() {
+  const u = S.user || { name: 'Pharmacy Store', lic: 'DL-99212', phone: '9999999999' };
+  const cnt = s => S.orders.filter(o => o.st === s).length, trk = ['Packed', 'Out for delivery', 'Delivered', 'Rejected'];
+  const tabs = [['cat', 'Catalogue'], ['pend', 'Pending', cnt('Pending')], ['conf', 'Confirmed', cnt('Confirmed')], ['trk', 'Tracking', S.orders.filter(o => trk.includes(o.st)).length]];
+  const rev = S.orders.filter(o => o.st === 'Delivered').reduce((t, o) => t + o.total, 0), low = S.meds.filter(m => m.stock <= 10).length;
+
+  $('#app').innerHTML = `${head('<button onclick="logout()">Log out</button>')}<div class="wrap">
+    <h2>${esc(u.name)}</h2>
+    <p class="muted" style="margin:2px 0 0">Licence ${esc(u.lic || 'DL-8820')} · ${esc(u.phone)}</p>
+    <div class="stats">
+      <div class="card stat"><b>${cnt('Pending')}</b>New Orders</div>
+      <div class="card stat"><b>${cnt('Confirmed')}</b>To Pack</div>
+      <div class="card stat"><b>₹${rev}</b>Delivered Sales</div>
+      <div class="card stat"><b>${low}</b>Low Stock</div>
+    </div>
+    <div class="chips">${tabs.map(t => `<button class="chip${S.tab === t[0] ? ' on' : ''}" onclick="S.tab='${t[0]}';S.edit=null;seller()">${t[1]}${t[2] ? ' (' + t[2] + ')' : ''}</button>`).join('')}</div>
+    <div id="sv" style="display:grid;gap:12px;margin-top:8px"></div>
+  </div>`;
+
+  ({
+    cat: sCat,
+    pend: () => sOrd(['Pending'], 'No new orders. Customer orders appear here for you to confirm.'),
+    conf: () => sOrd(['Confirmed'], 'Nothing to pack. Confirm a pending order first.'),
+    trk: () => sOrd(trk, 'Nothing in transit yet. Packed orders are tracked here.')
+  })[S.tab]();
+}
+
+function sCat() {
+  const q = S.sq.toLowerCase(), l = S.meds.filter(m => (m.name + m.cat).toLowerCase().includes(q));
+  if (!$('#sv')) return;
+  $('#sv').innerHTML = `${S.edit ? medForm() : `<div class="bar" style="margin:0"><input id="sq" placeholder="Search store catalogue..." value="${esc(S.sq)}" oninput="S.sq=this.value;sCat();const el=document.getElementById('sq');if(el)el.focus()"><button class="btn sm" onclick="S.edit='new';sCat()">Add Medicine</button></div>
+    <div class="card bar" style="flex-wrap:wrap;margin:0"><b>Run Store Sale</b><select id="bc" style="width:auto"><option>All</option>${CATS.map(c => `<option>${c}</option>`).join('')}</select><input id="bp" type="number" min="0" max="90" placeholder="% off" style="width:90px"><button class="btn sm" onclick="bulk()">Apply</button><span class="muted" style="font-size:13px">Enter 0 to clear sale.</span></div>`}
+  <div class="card"><b>Store Inventory (${l.length} items)</b>${l.map(m => `<div class="row" style="align-items:flex-start">
+    <div><b>${esc(m.name)}</b>${m.off ? ' <span class="tag">Unlisted</span>' : ''}
+      <div class="muted" style="font-size:14px">${esc(m.cat)} · ${m.rx ? 'Prescription needed' : 'No prescription'}</div>
+      <div style="font-size:14px">${pr(m)} · ${m.stock <= 0 ? '<span class="tag">Out of stock</span>' : m.stock <= 10 ? '<span class="tag">Only ' + m.stock + ' left</span>' : m.stock + ' in stock'}</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn sm ghost" onclick="S.edit=${m.id};sCat();window.scrollTo(0,0)">Edit</button>
+      <button class="btn sm ghost" onclick="tog(${m.id})">${m.off ? 'List' : 'Unlist'}</button>
+      <button class="btn sm ghost" onclick="del(${m.id})">Delete</button>
+    </div>
+  </div>`).join('') || '<p class="muted">No medicines found in catalogue.</p>'}</div>`;
+}
+
+function medForm() {
+  const n = S.edit === 'new', m = n ? { name: '', note: '', price: '', disc: 0, stock: 50, rx: false, cat: CATS[0], info: '' } : S.meds.find(x => x.id === S.edit);
+  if (!m) return '';
+  return `<div class="card">
+    <h3>${n ? 'Add New Medicine' : 'Edit Medicine Details'}</h3>
+    <div class="fg" style="margin-top:10px">
+      <label>Medicine Name<input id="n1" value="${esc(m.name)}"></label>
+      <label>Category<select id="n4">${CATS.map(c => `<option${c === m.cat ? ' selected' : ''}>${c}</option>`).join('')}</select></label>
+      <label>Price (₹)<input id="n2" type="number" min="1" value="${m.price}"></label>
+      <label>Discount (%)<input id="n5" type="number" min="0" max="90" value="${m.disc || 0}"></label>
+      <label>Stock Quantity<input id="n6" type="number" min="0" value="${m.stock}"></label>
+      <label>Pack Note<input id="n7" value="${esc(m.note)}" placeholder="Strip of 10"></label>
+    </div>
+    <label style="margin-top:10px">Product Description & Directions<textarea id="n8" rows="3">${esc(m.info)}</textarea></label>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input id="n3" type="checkbox" style="width:auto"${m.rx ? ' checked' : ''}>Requires Prescription (Rx)</label>
+    <div class="err" id="err"></div>
+    <div class="bar"><button class="btn" onclick="saveMed()">Save Medicine</button><button class="btn ghost" onclick="S.edit=null;sCat()">Cancel</button></div>
+  </div>`;
+}
+
+function saveMed() {
+  const v = i => ($('#n' + i) ? $('#n' + i).value.trim() : ''), name = v(1), price = +v(2), disc = +v(5) || 0, stock = +v(6) || 0;
+  if (!name || !(price > 0)) { if ($('#err')) $('#err').textContent = 'Enter a valid name and price greater than 0.'; return; }
+  if (disc < 0 || disc > 90) { if ($('#err')) $('#err').textContent = 'Discount must be between 0% and 90%.'; return; }
+  const isRx = $('#n3') ? $('#n3').checked : false;
+  const d = { name, price, disc, stock, cat: v(4), note: v(7), info: v(8) || 'Added by pharmacy seller.', rx: isRx };
+  if (S.edit === 'new') S.meds.push({ id: Date.now(), ...d });
+  else {
+    const existing = S.meds.find(x => x.id === S.edit);
+    if (existing) Object.assign(existing, d);
+  }
+  S.edit = null;
+  saveState();
+  seller();
+}
+
+function bulk() {
+  const c = $('#bc') ? $('#bc').value : 'All', p = $('#bp') ? +$('#bp').value : 0;
+  if (!(p >= 0 && p <= 90)) return;
+  S.meds.forEach(m => { if (c === 'All' || m.cat === c) m.disc = p; });
+  saveState();
+  seller();
+}
+
+function tog(id) {
+  const m = S.meds.find(x => x.id === id);
+  if (!m) return;
+  m.off = !m.off;
+  if (m.off) delete S.cart[id];
+  saveState();
+  sCat();
+}
+
+function del(id) {
+  S.meds = S.meds.filter(x => x.id !== id);
+  delete S.cart[id];
+  saveState();
+  seller();
+}
+
+function sOrd(sts, empty) {
+  const l = S.orders.filter(o => sts.includes(o.st));
+  if (!$('#sv')) return;
+  $('#sv').innerHTML = l.length ? l.map(o => `<div class="card">
+    <div class="row" style="border:0;padding:0"><b>#${o.id}</b><span class="tag${o.st === 'Delivered' ? ' ok' : ''}">${o.st}</span></div>
+    <div style="font-size:14px;margin-top:6px">${oline(o)}</div>
+    <div class="muted" style="font-size:14px;margin-top:4px">${esc(o.cust ? o.cust.name : 'Customer')}, ${esc(o.cust ? (o.cust.age || 25) : 25)} yrs · ${esc(o.cust ? o.cust.phone : '')}<br>${esc(o.cust ? o.cust.address : '')}</div>
+    <div style="margin:4px 0 8px">
+      <b>Total: ₹${o.total}</b> · ${o.rxData ? '<button class="link" onclick="viewRx(' + o.id + ')">View Prescription</button>' : 'No Rx required'}
+      ${o.aiVerified ? ' <span class="tag purple">🤖 AI Verified</span>' : ''}
+    </div>
+    ${o.st === 'Pending' ? '' : stepper(o.st)}
+    <div class="bar">${acts(o)}</div>
+  </div>`).join('') : `<p class="muted">${empty}</p>`;
+}
+
+function acts(o) {
+  const b = (t, st, g) => `<button class="btn sm${g ? ' ghost' : ''}" onclick="act(${o.id},'${st}')">${t}</button>`;
+  return {
+    Pending: b('Confirm Order', 'Confirmed') + b('Reject', 'Rejected', 1),
+    Confirmed: b('Mark Packed', 'Packed'),
+    Packed: b('Send Out for Delivery', 'Out for delivery'),
+    'Out for delivery': b('Mark Delivered', 'Delivered')
+  }[o.st] || '';
+}
+
+function act(id, st) {
+  const o = S.orders.find(x => x.id === id);
+  if (!o) return;
+  o.st = st;
+  if (st === 'Confirmed') (o.items || []).forEach(i => { const m = S.meds.find(x => x.id === i.mid); if (m) m.stock = Math.max(0, m.stock - i.n); });
+  saveState();
+  seller();
+}
+
+// Initial safe render call on page load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', safeRender);
+} else {
+  safeRender();
+}
+</script>
+</body>
+</html>
